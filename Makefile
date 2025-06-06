@@ -1,14 +1,36 @@
+# Компилятор и флаги для Windows
 CC = gcc
 CFLAGS = -Iinclude -Wall -Wextra
-LIBS = -lX11 -lopencv_core -lopencv_imgproc
+# Библиотеки для Windows (используем MinGW)
+LIBS = -lgdi32
 
-all: app
+# Используем Windows-совместимые пути
+SRC_DIR = src
+OBJ_DIR = obj
+BIN_DIR = bin
 
-app: src/main.o src/capture.o src/detect.o src/overlay.o
-	$(CC) -o app src/main.o src/capture.o src/detect.o src/overlay.o $(LIBS)
+# Создаем директории если их нет
+$(shell mkdir $(OBJ_DIR) $(BIN_DIR))
 
-src/%.o: src/%.c
+# Список объектных файлов
+OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/capture.o $(OBJ_DIR)/overlay.o
+
+all: $(BIN_DIR)/app.exe
+
+$(BIN_DIR)/app.exe: $(OBJS)
+	$(CC) -o $@ $^ $(LIBS)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Команда очистки для Windows
 clean:
-	rm -f app src/*.o
+	if exist $(OBJ_DIR)\*.o del /Q $(OBJ_DIR)\*.o
+	if exist $(BIN_DIR)\app.exe del $(BIN_DIR)\app.exe
+
+# Создаем директории при очистке
+clean-dirs:
+	if exist $(OBJ_DIR) rmdir /S /Q $(OBJ_DIR)
+	if exist $(BIN_DIR) rmdir /S /Q $(BIN_DIR)
+
+.PHONY: all clean clean-dirs
