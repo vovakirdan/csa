@@ -8,6 +8,7 @@ LIBS = -lgdi32
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
+SCREENSHOTS_DIR = screenshots
 
 # Создаем директории если их нет
 $(shell mkdir $(OBJ_DIR) $(BIN_DIR))
@@ -32,5 +33,6 @@ clean:
 clean-dirs:
 	if exist $(OBJ_DIR) rmdir /S /Q $(OBJ_DIR)
 	if exist $(BIN_DIR) rmdir /S /Q $(BIN_DIR)
+	if exist $(SCREENSHOTS_DIR) rmdir /S /Q $(SCREENSHOTS_DIR)
 
 .PHONY: all clean clean-dirs
