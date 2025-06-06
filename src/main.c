@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <stdbool.h>
 #include "capture.h"
-#include "detect.h"
 #include "overlay.h"
 
 int main() {
@@ -10,13 +9,12 @@ int main() {
     int width, height;
 
     while (1) {
+        // просто сделаем скриншот
         if (capture_screen(&buffer, &width, &height) == 0) {
-            if (detect_code(buffer, width, height)) {
-                printf("Code detected!\n");
-                show_overlay();
-            }
+            printf("No code detected!\n");
         }
-        sleep(1);
+        // sleep(1);
+        exit(0);
     }
 
     return 0;
