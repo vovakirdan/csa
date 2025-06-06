@@ -14,6 +14,11 @@ typedef struct {
     int number;
 } MonitorInfo;
 
+typedef struct {
+    MonitorInfo* monitors;
+    int index;
+} MonitorEnumData;
+
 // Функция для создания директории, если она не существует
 static int ensure_directory_exists(const char* dir) {
     // Проверяем существование директории
@@ -35,17 +40,21 @@ static void get_timestamp(char* buffer, size_t size) {
 
 // Функция обратного вызова для перечисления мониторов
 static BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
-    MonitorInfo* monitors = (MonitorInfo*)dwData;
-    MONITORINFOEXA mi;  // Используем ANSI версию
+    MonitorEnumData* data = (MonitorEnumData*)dwData;
+    MonitorInfo* monitors = data->monitors;
+    int idx = data->index;
+
+    MONITORINFOEXA mi;
     mi.cbSize = sizeof(MONITORINFOEXA);
-    GetMonitorInfoA(hMonitor, (LPMONITORINFO)&mi);  // Явное приведение типов
-    
-    monitors->x = mi.rcMonitor.left;
-    monitors->y = mi.rcMonitor.top;
-    monitors->width = mi.rcMonitor.right - mi.rcMonitor.left;
-    monitors->height = mi.rcMonitor.bottom - mi.rcMonitor.top;
-    monitors->number = monitors - (MonitorInfo*)dwData + 1;
-    
+    GetMonitorInfoA(hMonitor, (LPMONITORINFO)&mi);
+
+    monitors[idx].x = mi.rcMonitor.left;
+    monitors[idx].y = mi.rcMonitor.top;
+    monitors[idx].width = mi.rcMonitor.right - mi.rcMonitor.left;
+    monitors[idx].height = mi.rcMonitor.bottom - mi.rcMonitor.top;
+    monitors[idx].number = idx + 1;
+
+    data->index += 1;
     return TRUE;
 }
 
@@ -53,18 +62,14 @@ static BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT l
 static int get_monitors_info(MonitorInfo** monitors, int* count) {
     *count = GetSystemMetrics(SM_CMONITORS);
     *monitors = (MonitorInfo*)malloc(sizeof(MonitorInfo) * (*count));
-    
     if (!*monitors) {
         return 0;
     }
-
-    for (int i = 0; i < *count; i++) {
-        if (!EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)(*monitors + i))) {
-            // Обработка ошибки
-            free(*monitors);
-            *monitors = NULL;
-            return 0;
-        }
+    MonitorEnumData data = { .monitors = *monitors, .index = 0 };
+    if (!EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)&data)) {
+        free(*monitors);
+        *monitors = NULL;
+        return 0;
     }
     return 1;
 }
